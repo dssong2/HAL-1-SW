@@ -134,7 +134,7 @@ extern "C" void updateDataTask(void*)
         // mAccZ = remapped BMI Y axis = physical rocket vertical (reads +1g upright at rest).
         const float az   = g_telemNow.mAccZ;
         const float pitch = g_telemNow.pitch;
-        //const float yaw = g_telemNow.yaw;
+        const float yaw = g_telemNow.yaw;
         //const float roll = g_telemNow.roll;
         const float vvel  = g_telemNow.verticalVelocity;
         const uint32_t nowMs = osKernelGetTickCount();
@@ -178,7 +178,8 @@ extern "C" void updateDataTask(void*)
                                   (nowMs - burnoutMs) >= MAX_ACTUATION_DURATION_MS;
             const bool vvel_low = STATE_BURNOUT &&
                                   fabsf(vvel) < MIN_ACTUATION_VEL_MS;
-            if (fabsf(pitch) > MAX_PITCH_ANGLE_DEG || vvel_low || timeout) {
+            const float att_unit = acos(cos(pitch) * cos(yaw));
+            if (att_unit > MAX_PITCH_ANGLE_DEG * (M_PI / 180.0) || vvel_low || timeout) {
                 actuation_locked = true;
                 ALLOW_ACTUATION  = false;
                 g_ctrls_enabled  = false;
