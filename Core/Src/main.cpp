@@ -178,7 +178,7 @@ extern "C" void updateDataTask(void*)
                                   (nowMs - burnoutMs) >= MAX_ACTUATION_DURATION_MS;
             const bool vvel_low = STATE_BURNOUT &&
                                   fabsf(vvel) < MIN_ACTUATION_VEL_MS;
-            const float att_unit = acos(cos(pitch) * cos(yaw));
+            const float att_unit = acos(cos(pitch * (180.0 / M_PI)) * cos(yaw * (180 / M_PI)));
             if (att_unit > MAX_PITCH_ANGLE_DEG * (M_PI / 180.0) || vvel_low || timeout) {
                 actuation_locked = true;
                 ALLOW_ACTUATION  = false;
