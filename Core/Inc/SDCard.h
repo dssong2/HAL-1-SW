@@ -7,6 +7,10 @@
 
 #include <stdint.h>
 
+// TODO: buffer SD_Log* writes in RAM and have a separate task write them to the
+// card in bulk, instead of calling f_printf + f_sync on every call. The API
+// below should stay the same.
+
 // Mount the filesystem and open the log file.
 // Must be called once before any SD_Log* call.
 // Returns:
