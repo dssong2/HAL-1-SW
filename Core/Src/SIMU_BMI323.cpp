@@ -104,16 +104,19 @@ int SIMU_BMI323::Update()
     if (rslt != BMI3_OK)
         return rslt;
 
-    // ODR is 200 Hz (new data every 5 ms); sensor task polls every 2 ms.
-    // Return early on calls where data isn't ready yet rather than
-    // spinning and blocking the FreeRTOS scheduler.
-    if (!((int_status & BMI3_INT_STATUS_ACC_DRDY) &&
-          (int_status & BMI3_INT_STATUS_GYR_DRDY)  &&
-          (int_status & BMI3_INT_STATUS_TEMP_DRDY)))
-    {
-        return BMI3_OK;
-    }
+    const bool acc_ready  = int_status & BMI3_INT_STATUS_ACC_DRDY;
+    const bool gyr_ready  = int_status & BMI3_INT_STATUS_GYR_DRDY;
+    const bool temp_ready = int_status & BMI3_INT_STATUS_TEMP_DRDY;
 
+    // ODR is 200 Hz (new data every 5 ms); sensor task polls every 2 ms.
+    // INT_STATUS_INT1 is clear-on-read, so each DRDY bit is only seen once:
+    // update every channel whose bit is set now, or that sample is lost.
+    // Return early if nothing is ready rather than blocking the scheduler.
+    if (!acc_ready && !gyr_ready && !temp_ready)
+        return BMI3_OK;
+
+    // A single burst read covers all three channels, so read them all
+    // and only commit the ones that reported new data.
     bmi3_sensor_data sensor_data[3] = {};
     sensor_data[0].type = BMI323_ACCEL;
     sensor_data[1].type = BMI323_GYRO;
@@ -123,16 +126,38 @@ int SIMU_BMI323::Update()
     if (rslt != BMI3_OK)
         return rslt;
 
-    _raw.accel_linear.x = lsb_to_g(sensor_data[0].sens_data.acc.x, 16.0f, device.resolution);
-    _raw.accel_linear.y = lsb_to_g(sensor_data[0].sens_data.acc.y, 16.0f, device.resolution);
-    _raw.accel_linear.z = lsb_to_g(sensor_data[0].sens_data.acc.z, 16.0f, device.resolution);
+    if (acc_ready)
+    {
+        _raw.accel_raw = {sensor_data[0].sens_data.acc.x,
+                          sensor_data[0].sens_data.acc.y,
+                          sensor_data[0].sens_data.acc.z};
 
-    _raw.ang_vel.x = lsb_to_dps(sensor_data[1].sens_data.gyr.x, 2000.0f, device.resolution);
-    _raw.ang_vel.y = lsb_to_dps(sensor_data[1].sens_data.gyr.y, 2000.0f, device.resolution);
-    _raw.ang_vel.z = lsb_to_dps(sensor_data[1].sens_data.gyr.z, 2000.0f, device.resolution);
+        _raw.accel_linear.x = lsb_to_g(sensor_data[0].sens_data.acc.x, 16.0f, device.resolution);
+        _raw.accel_linear.y = lsb_to_g(sensor_data[0].sens_data.acc.y, 16.0f, device.resolution);
+        _raw.accel_linear.z = lsb_to_g(sensor_data[0].sens_data.acc.z, 16.0f, device.resolution);
 
-    float tempForDBG =
-        (float)(((float)((int16_t)sensor_data[2].sens_data.temp.temp_data) / 512.0f) + 23.0f);
+        _raw.accel_update_count++;
+    }
+
+    if (gyr_ready)
+    {
+        _raw.gyro_raw = {sensor_data[1].sens_data.gyr.x,
+                         sensor_data[1].sens_data.gyr.y,
+                         sensor_data[1].sens_data.gyr.z};
+
+        _raw.ang_vel.x = lsb_to_dps(sensor_data[1].sens_data.gyr.x, 2000.0f, device.resolution);
+        _raw.ang_vel.y = lsb_to_dps(sensor_data[1].sens_data.gyr.y, 2000.0f, device.resolution);
+        _raw.ang_vel.z = lsb_to_dps(sensor_data[1].sens_data.gyr.z, 2000.0f, device.resolution);
+
+        _raw.gyro_update_count++;
+    }
+
+    if (temp_ready)
+    {
+        _raw.temp_raw = (int16_t)sensor_data[2].sens_data.temp.temp_data;
+
+        _raw.temp_update_count++;
+    }
 
     return rslt;
 }
