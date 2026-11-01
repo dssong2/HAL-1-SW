@@ -23,6 +23,10 @@ struct BMI_Data
     Vector3D<float> accel_linear;
     Vector3D<float> ang_vel;
 
+    /* the stuff below are tacked on for LOGGING PURPOSES ONLY.
+    do not use for control purposes. eventually we'll organize this better
+    */
+
     // Raw register values (LSB), no unit conversion
     Vector3D<int16_t> accel_raw;
     Vector3D<int16_t> gyro_raw;
