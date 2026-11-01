@@ -219,36 +219,55 @@ extern "C" void Radio(void*)
 extern GPS_Data g_GPS;
 
 extern "C" void SDLogTask(void*) {
+    // note that since this SDLogTask runs at a fixed frequency, we miss out on some data because the IMU updates much faster than we can log
+    // for now, we'll keep this as a trade off
+
     while (!initDone)
         osDelay(10);
 
     SD_LogNewline("=== HAL-1 LOG START ===");
     SD_LogNewline("SENS1,tick_ms\tlat,lon\tbaro_alt_m,gps_alt_m\tvvel_ms\ttemp_c,");
     SD_LogNewline("SENS2,tick_ms\taccX,accY,accZ,gyrX,gyrY,gyrZ,roll,pitch,yaw,s1cmd_deg,s2cmd_deg,rssi,pyro_dm,pyro_db,pyro_mc");
+    SD_LogNewline("RAW,tick_ms"
+                  "\tA_accX,A_accY,A_accZ,A_gyrX,A_gyrY,A_gyrZ,A_temp"
+                  "\tB_accX,B_accY,B_accZ,B_gyrX,B_gyrY,B_gyrZ,B_temp"
+                  "\tC_accX,C_accY,C_accZ,C_gyrX,C_gyrY,C_gyrZ,C_temp");
     SD_LogNewline("GPS,tick_ms\tlat,lon\talt_m\thh:mm:ss\tsats\thdop");
     SD_LogNewline("DYN,tick_ms\tt_s\talt_m\tvz_ms,vh_ms\troll_rate_rads");
     SD_LogNewline("EVENT,tick_ms\tdescription");
 
     for (;;) {
         telemetryData s = {};
+        int16_t raw[3][7] = {}; // per BMI323 A/B/C: acc x,y,z, gyr x,y,z, temp (LSB)
         if (osMutexAcquire(g_ctrls_sensor_mutex, 5) == osOK) {
             s = g_telemNow;
+            for (int i = 0; i < 3; i++) {
+                const BMI_Data& d = g_rawLogData.imu[i];
+                raw[i][0] = d.accel_raw.x; raw[i][1] = d.accel_raw.y; raw[i][2] = d.accel_raw.z;
+                raw[i][3] = d.gyro_raw.x;  raw[i][4] = d.gyro_raw.y;  raw[i][5] = d.gyro_raw.z;
+                raw[i][6] = d.temp_raw;
+            }
             osMutexRelease(g_ctrls_sensor_mutex);
         }
         GPS_Data gps = g_GPS;
 
+        // Shared by SENS1, SENS2 and RAW: all come from the snapshot above, so
+        // equal ticks let the lines be matched up when parsing
+        const uint32_t snapTick = HAL_GetTick();
+
         char ln1[112], ln2[152], ln3[96];
+        static char ln4[192]; // static: keeps this task's 2 KB stack clear of snprintf's needs
 
         snprintf(ln1, sizeof(ln1),
             "SENS1,%lu\t%.5f,%.5f\t%.1f,%.1f\t%.2f\t%.1f",
-            HAL_GetTick(),
+            snapTick,
             (double)s.latitude, (double)s.longitude,
             (double)s.altitude, (double)s.GPSaltitude,
             (double)s.verticalVelocity, (double)s.temperature);
 
         snprintf(ln2, sizeof(ln2),
             "SENS2,%lu\t%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.2f,%.2f,%.2f,%.1f,%.1f,%d,%d,%d,%d",
-            HAL_GetTick(),
+            snapTick,
             (double)s.mAccX,  (double)s.mAccY,  (double)s.mAccZ,
             (double)s.mGyrX,  (double)s.mGyrY,  (double)s.mGyrZ,
             (double)s.roll,   (double)s.pitch,   (double)s.yaw,
@@ -257,6 +276,12 @@ extern "C" void SDLogTask(void*) {
             (int)s.pyroMainDrogueFired,
             (int)s.pyroBackupDrogueFired,
             (int)s.pyroMainChuteFired);
+
+        int n = snprintf(ln4, sizeof(ln4), "RAW,%lu", snapTick);
+        for (int i = 0; i < 3 && n > 0 && n < (int)sizeof(ln4); i++) {
+            n += snprintf(ln4 + n, sizeof(ln4) - n, "\t%d,%d,%d,%d,%d,%d,%d",
+                raw[i][0], raw[i][1], raw[i][2], raw[i][3], raw[i][4], raw[i][5], raw[i][6]);
+        }
 
         snprintf(ln3, sizeof(ln3),
             "GPS,%lu\t%.7f,%.7f\t%.2f\t%02u:%02u:%02u\t%u\t%.2f",
@@ -267,6 +292,7 @@ extern "C" void SDLogTask(void*) {
 
         SD_LogNewline(ln1);
         SD_LogNewline(ln2);
+        SD_LogNewline(ln4);
         SD_LogNewline(ln3);
 
         osDelay(10); // 100 Hz
