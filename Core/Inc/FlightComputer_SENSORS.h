@@ -60,6 +60,16 @@ typedef struct {
     float targetS2;
 } ServoAngles;
 
+// LOGGING-ONLY SENSOR DATA. Not sent over radio; DO NOT USE FOR FLIGHT CONTROLS.
+// Guard reads and writes with g_ctrls_sensor_mutex.
+struct SensorLogData {
+    // Per-sensor BMI323 data from IMUs::getRawBMI(0-2) (A/B/C): raw LSBs,
+    // converted values and per-channel update counts. B/C stay 0 when TMR is off.
+    BMI_Data imu[3];
+};
+
+extern SensorLogData g_rawLogData;
+
 class Sensors {
     IMUs IMU;
     Baro_Unified Baro;

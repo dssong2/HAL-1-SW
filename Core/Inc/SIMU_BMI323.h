@@ -11,7 +11,8 @@
 #include "Math/Math.h"
 #include "BMI323_Platform.h"
 
-typedef enum {
+typedef enum
+{
     SENSOR1_I,
     SENSOR2_I,
     SENSOR3_I
@@ -21,12 +22,31 @@ struct BMI_Data
 {
     Vector3D<float> accel_linear;
     Vector3D<float> ang_vel;
+
+    /* the stuff below are tacked on for LOGGING PURPOSES ONLY.
+    do not use for control purposes. eventually we'll organize this better
+    */
+
+    // Raw register values (LSB), no unit conversion
+    Vector3D<int16_t> accel_raw;
+    Vector3D<int16_t> gyro_raw;
+    int16_t temp_raw = 0;
+
+    // incremented every time we pull data from each channel: accel/gyro/temp
+    // each channel may update at different times, so sometimes BMI_Data might be
+    // fresh for one sensor but stale for others. use these counts to help determine
+    // what's fresh and what's not. mostly important for logging
+    // uint64's so that we don't overflow
+    uint64_t accel_update_count = 0;
+    uint64_t gyro_update_count = 0;
+    uint64_t temp_update_count = 0;
 };
 
-typedef struct {
-    SPI_HandleTypeDef* SPIbus;
+typedef struct
+{
+    SPI_HandleTypeDef *SPIbus;
     BMI_INDEX index;
-    GPIO_TypeDef* cs_port;
+    GPIO_TypeDef *cs_port;
     uint16_t cs_pin;
 } BMIobjPtr;
 
@@ -49,14 +69,14 @@ private:
     bmi3_map_int map_int = {0};
 
     /*! @brief Converts raw sensor values(LSB) to G value
- *
- *  @param[in] val        : Raw sensor value.
- *  @param[in] g_range    : Accel Range selected (4G).
- *  @param[in] bit_width  : Resolution of the sensor.
- *
- *  @return Accel values in Gravity(G)
- *
- */
+     *
+     *  @param[in] val        : Raw sensor value.
+     *  @param[in] g_range    : Accel Range selected (4G).
+     *  @param[in] bit_width  : Resolution of the sensor.
+     *
+     *  @return Accel values in Gravity(G)
+     *
+     */
     static float lsb_to_g(int16_t val, float g_range, uint8_t bit_width);
 
     /*!
@@ -66,4 +86,4 @@ private:
     static float lsb_to_dps(int16_t val, float dps, uint8_t bit_width);
 };
 
-#endif //KINGFISHER_SW_SIMU_BMI323_H
+#endif // KINGFISHER_SW_SIMU_BMI323_H

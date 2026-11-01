@@ -14,6 +14,7 @@ BMI_Data          g_BMI;
 BMP_Data          g_BMP;
 GPS_Data          g_GPS;
 ServoAngles       g_servoAngles;
+SensorLogData     g_rawLogData;
 
 
 Sensors::Sensors() : mag(&hspi1) {}
@@ -129,6 +130,10 @@ int8_t Sensors::Update()
 	g_SensorData.flight_time_s = flightTimeS;
 	g_SensorData.timestamp_ms  = HAL_GetTick();
 	g_SensorData.fresh         = true;
+
+    // Logging-only per-sensor IMU data (raw LSBs + per-channel update counts)
+    for (uint8_t i = 0; i < 3; i++)
+        g_rawLogData.imu[i] = IMU.getRawBMI(i);
 
     osMutexRelease(g_ctrls_sensor_mutex);
     } // osMutexAcquire
