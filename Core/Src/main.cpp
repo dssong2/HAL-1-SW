@@ -181,7 +181,7 @@ extern "C" void updateDataTask(void*)
             const bool vvel_low = STATE_BURNOUT &&
                                   fabsf(vvel) < MIN_ACTUATION_VEL_MS;
             const float cos_att_unit = cos(pitch * (180.0 / M_PI)) * cos(yaw * (180.0 / M_PI));
-            if (cos_att_unit > MAX_TILT_ANGLE_COS || vvel_low || timeout) {
+            if (cos_att_unit < MAX_TILT_ANGLE_COS || vvel_low || timeout) {
                 actuation_locked = true;
                 ALLOW_ACTUATION  = false;
                 g_ctrls_enabled  = false;
