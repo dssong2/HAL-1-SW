@@ -189,7 +189,8 @@ extern "C" void updateDataTask(void*)
         }
 
         // Wake CTRLs so it reads the freshest gyro data with minimum latency.
-        xTaskNotifyGive(CTRLIndicationHandle);
+        // Temporary guard to ensure the CTRLs task is disabled safely.
+        // if (CTRLIndicationHandle != NULL) xTaskNotifyGive(CTRLIndicationHandle);
     }
 }
 

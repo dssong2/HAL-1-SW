@@ -126,10 +126,11 @@ void MX_FREERTOS_Init(void) {
   updateDataTaskHandle = osThreadNew(updateDataTask, NULL, &dataTask_attr);
 
   // ── Controls (EKF + roll law) ─────────────────────────────────────────────────
-  static const osThreadAttr_t ctrlsTask_attr = {
-    .name = "CTRLs", .stack_size = 4096 * 3, .priority = osPriorityRealtime,
-  };
-  CTRLIndicationHandle = osThreadNew(CTRLs, NULL, &ctrlsTask_attr);
+  // static const osThreadAttr_t ctrlsTask_attr = {
+  //  .name = "CTRLs", .stack_size = 4096 * 3, .priority = osPriorityRealtime,
+  // };
+  //CTRLIndicationHandle = osThreadNew(CTRLs, NULL, &ctrlsTask_attr);
+  // All commented out to disable the CTRLs task temporarily.
 
   // ── SD card logger (50 Hz CSV, AboveNormal so it doesn't starve flight tasks) ──
   static const osThreadAttr_t sdlogTask_attr = {
