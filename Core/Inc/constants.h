@@ -41,6 +41,7 @@
 
 // ── Controls activation gate ──────────────────────────────────────────────────
 #define MAX_PITCH_ANGLE_DEG     30.0f   // if pitch exceeds this, permanently disable actuation
+#define MAX_TILT_ANGLE_COS      0.8660254f //cosine of 30 degrees, used for actuation lock check
 #define MIN_ACTUATION_VEL_MS    2.0f    // if |vertical velocity| drops below this, permanently disable actuation
 
 // ── Vertical velocity ─────────────────────────────────────────────────────────
