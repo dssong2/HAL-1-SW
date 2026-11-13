@@ -33,8 +33,8 @@ int8_t Sensors::Init()
     if (GPS.Init(&hi2c4) != 0)
         result = STATUS_SENSOR_FAIL;
 
-    bool servoOk = Servos.Init({g_gndData.servoOffset1, g_gndData.servoOffset2},
-                                PRECISION::TENTH_DEGREE, false);
+    // bool servoOk = Servos.Init({g_gndData.servoOffset1, g_gndData.servoOffset2},
+    //                             PRECISION::TENTH_DEGREE, false);
     //if (!servoOk)
     //result = STATUS_SENSOR_FAIL;
 
@@ -60,7 +60,7 @@ int8_t Sensors::Update()
     // Servos' positions are updated in control algo (global Servos in main.cpp).
     // SetOffset is NOT called here — calling Actuate() from this task at 500 Hz
     // would overwrite TIM3 CCR1/CCR2 and fight the CTRLs commands.
-    SAsym<float> c_Servos = Servos.getCurrentAngle();
+    // SAsym<float> c_Servos = Servos.getCurrentAngle();
     MAXM10S::gpsData c_GPS = GPS.getData();
     g_BMI = IMU.getVotedBMI();
     g_BMP = Baro.getData().Filtered;
@@ -112,8 +112,8 @@ int8_t Sensors::Update()
     g_telemNow.mGyrX = g_BMI.ang_vel.x;
     g_telemNow.mGyrY = g_BMI.ang_vel.z;
     g_telemNow.mGyrZ = g_BMI.ang_vel.y;
-    g_telemNow.servoPos1 = c_Servos.S1;
-    g_telemNow.servoPos2 = c_Servos.S2;
+    // g_telemNow.servoPos1 = c_Servos.S1;
+    // g_telemNow.servoPos2 = c_Servos.S2;
 
     // Populate controls sensor snapshot (same axes/units as g_telemNow above).
     // ang_vel from BMI is in deg/s — EKF expects rad/s.

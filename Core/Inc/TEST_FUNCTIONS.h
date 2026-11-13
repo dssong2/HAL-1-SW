@@ -19,7 +19,7 @@
 class TEST{
 public:
     TEST();
-    int SERVO_TEST();
+    // int SERVO_TEST();
     int IMU_TEST();
     int BARO_TEST();
     int LIS2_TEST();

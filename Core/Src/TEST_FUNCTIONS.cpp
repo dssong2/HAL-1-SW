@@ -15,25 +15,25 @@ TEST::TEST(){;}
 
 //TODO
 //Need to change code of PWM generation. verify correct pwm signal
-int TEST::SERVO_TEST() {
-    Servo_Axon_Mini_MKII servoSet;
-    bool initState = servoSet.Init({0,0}, PRECISION::TENTH_DEGREE, true);
-    vTaskDelay(500);
+// int TEST::SERVO_TEST() {
+//     Servo_Axon_Mini_MKII servoSet;
+//     bool initState = servoSet.Init({0,0}, PRECISION::TENTH_DEGREE, true);
+//     vTaskDelay(500);
 
-    // Track status of servos
-    static int status = 0;
-    if (status == 0 && initState) {
-        while (1) {
-            servoSet.Update(90.0F, -33.0F);
-            vTaskDelay(1000);
-            servoSet.Update(-45.0F, 45.0F);
-            vTaskDelay(1000);
-            servoSet.Update(0.0F, 0.0F);
-        }
-    }
+//     // Track status of servos
+//     static int status = 0;
+//     if (status == 0 && initState) {
+//         while (1) {
+//             servoSet.Update(90.0F, -33.0F);
+//             vTaskDelay(1000);
+//             servoSet.Update(-45.0F, 45.0F);
+//             vTaskDelay(1000);
+//             servoSet.Update(0.0F, 0.0F);
+//         }
+//     }
 
-    return status;
-}
+//     return status;
+// }
 
 int TEST::IMU_TEST() {
     IMUs IMU_ENGINE = IMUs();

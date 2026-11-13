@@ -43,8 +43,9 @@ extern "C" void FC_Init(void*) {
     while (telem.Init() != STATUS_OK)
         osDelay(100);
 
-    while (Servos.Init({0,0}, TENTH_DEGREE, false) != true)
-        osDelay(100);
+    // Commented out because servos are not going to be run in flight.
+    // while (Servos.Init({0,0}, TENTH_DEGREE, false) != true)
+    //     osDelay(100);
 
     while (SD_Init() != 0) {
         HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
@@ -308,7 +309,7 @@ void CTRLs_PID()
         }
 
         if (fabsf(roll_rate_dps) <= ROLL_RATE_THRESHOLD_RPS) {
-            Servos.Update(0.0f, 0.0f);
+            //Servos.Update(0.0f, 0.0f);
             if (osMutexAcquire(g_ctrls_sensor_mutex, 2U) == osOK) {
                 g_telemNow.servoTarget1 = g_gndData.servoOffset1;
                 g_telemNow.servoTarget2 = g_gndData.servoOffset2;
@@ -327,7 +328,7 @@ void CTRLs_PID()
         if (cmd < -MAX_DEFLECT_DEG) cmd = -MAX_DEFLECT_DEG;
 
         // AngleOffsetDEGREES (ground-station trim) is applied inside Actuate().
-        Servos.Update(cmd, cmd);
+        // Servos.Update(cmd, cmd);
 
         if (osMutexAcquire(g_ctrls_sensor_mutex, 2U) == osOK) {
             g_telemNow.servoTarget1 = cmd + g_gndData.servoOffset1;
@@ -376,7 +377,7 @@ void CTRLs_STATESPACE() {
         {
             // Remote kill or algorithm switch — return so the task loop re-evaluates.
             if (!g_ctrls_enabled || !ALLOW_ACTUATION || STATE_BACKUP_PID) {
-                Servos.Update(0.0f, 0.0f);
+                // Servos.Update(0.0f, 0.0f);
                 return;
             }
 
@@ -455,7 +456,7 @@ void CTRLs_STATESPACE() {
                 apogee_latched  = true;
                 apogee_blink_ms = now_ms;
                 g_ctrls_enabled = false;
-                Servos.Update(0.0f, 0.0f);
+                // Servos.Update(0.0f, 0.0f);
                 SD_LogNewline("EVENT,ModelApogee");
             }
 
@@ -489,7 +490,7 @@ void CTRLs_STATESPACE() {
 
             // Both canards receive the same deflection command to produce roll.
             // Ground-station offsets apply the per-servo zero-point trim.
-            Servos.Update(u_deg, u_deg);
+            // Servos.Update(u_deg, u_deg);
             if (osMutexAcquire(g_ctrls_sensor_mutex, 20) == osOK) {
                 g_telemNow.servoTarget1 = u_deg + g_gndData.servoOffset1;
                 g_telemNow.servoTarget2 = u_deg + g_gndData.servoOffset2;

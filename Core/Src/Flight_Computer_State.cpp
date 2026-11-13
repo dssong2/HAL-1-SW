@@ -40,7 +40,7 @@ int8_t FlightComputer::UpdateStateCONOPS() {
 
         case PREFLIGHT:
             //FCDevices.dev_servoSet.SetOffset({FCData.dat_GND_Data.servoOffset1, FCData.dat_GND_Data.servoOffset2});
-            FCDevices.dev_servoSet.Update(0.0f, 0.0f);   // hold neutral so GND offset is live
+            // FCDevices.dev_servoSet.Update(0.0f, 0.0f);   // hold neutral so GND offset is live
             if (FCData.dat_BMI_IMUs.accel_linear.magnitude() > LIFTOFF_ACCEL_G) {
                 if (liftoffDetectMs == 0) liftoffDetectMs = millis();
                 if ((millis() - liftoffDetectMs > LIFTOFF_SUSTAIN_MS) &&
@@ -76,12 +76,12 @@ int8_t FlightComputer::UpdateStateCONOPS() {
                 ctrlTestStepStartMs = millis();
             }
 
-            FCDevices.dev_servoSet.Update(ctrlAngles[ctrlTestStep],
-                                          ctrlAngles[ctrlTestStep]);
+            // FCDevices.dev_servoSet.Update(ctrlAngles[ctrlTestStep],
+            //                               ctrlAngles[ctrlTestStep]);
 
             if (vertVelocityMs < APOGEE_APPROACH_VEL_MS) {
                 currentStage = APOGEE_APPROACH;
-                FCDevices.dev_servoSet.Update(0.0f, 0.0f);
+                // FCDevices.dev_servoSet.Update(0.0f, 0.0f);
                 SD_LogNewline("STAGE: APOGEE_APPROACH");
             }
             break;
